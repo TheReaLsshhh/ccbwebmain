@@ -11,6 +11,7 @@ const Navbar = ({ isTopBarVisible = true }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
+  const [isAdmissionsDropdownOpen, setIsAdmissionsDropdownOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     const newMenuState = !isMobileMenuOpen;
@@ -364,13 +365,57 @@ const Navbar = ({ isTopBarVisible = true }) => {
             >
               ACADEMICS
             </a>
-            <a
-              href="/admissions"
-              className={getActiveNavClass("/admissions")}
-              onClick={handleNavLinkClick}
+            <div
+              className="admissions-dropdown-container"
+              onMouseEnter={() => setIsAdmissionsDropdownOpen(true)}
+              onMouseLeave={() => setIsAdmissionsDropdownOpen(false)}
             >
-              ADMISSIONS
-            </a>
+              <a
+                href="/admissions"
+                className="nav-link admissions-nav-link"
+                onMouseEnter={() => setIsAdmissionsDropdownOpen(true)}
+                onClick={handleNavLinkClick}
+              >
+                ADMISSIONS
+                <span className="dropdown-arrow">▼</span>
+              </a>
+              <div
+                className={`admissions-dropdown ${
+                  isAdmissionsDropdownOpen ? "dropdown-open" : ""
+                }`}
+                onMouseEnter={() => setIsAdmissionsDropdownOpen(true)}
+                onMouseLeave={() => setIsAdmissionsDropdownOpen(false)}
+              >
+                <a
+                  href="/admissions#new-student-scholar"
+                  className="dropdown-item"
+                  onClick={handleNavLinkClick}
+                >
+                  New Student (Scholar)
+                </a>
+                <a
+                  href="/admissions#new-student-non-scholar"
+                  className="dropdown-item"
+                  onClick={handleNavLinkClick}
+                >
+                  New Student (Non-Scholar)
+                </a>
+                <a
+                  href="/admissions#continuing-student-scholar"
+                  className="dropdown-item"
+                  onClick={handleNavLinkClick}
+                >
+                  Continuing Student (Scholar)
+                </a>
+                <a
+                  href="/admissions#continuing-student-non-scholar"
+                  className="dropdown-item"
+                  onClick={handleNavLinkClick}
+                >
+                  Continuing Student (Non-Scholar)
+                </a>
+              </div>
+            </div>
             {/* Services Dropdown */}
             <div 
               className="services-dropdown-container"
@@ -397,7 +442,7 @@ const Navbar = ({ isTopBarVisible = true }) => {
                   rel="noopener noreferrer"
                   onClick={handleNavLinkClick}
                 >
-                  City College of Bayawan - Library
+                  College Library
                 </a>
                 <a
                   href="https://www.facebook.com/profile.php?id=61577470075989"
@@ -406,7 +451,7 @@ const Navbar = ({ isTopBarVisible = true }) => {
                   rel="noopener noreferrer"
                   onClick={handleNavLinkClick}
                 >
-                  City College of Bayawan - GIYA
+                  GIYA Center
                 </a>
                 <a
                   href="https://www.facebook.com/profile.php?id=61582297621099"
@@ -415,7 +460,7 @@ const Navbar = ({ isTopBarVisible = true }) => {
                   rel="noopener noreferrer"
                   onClick={handleNavLinkClick}
                 >
-                  City College of Bayawan - Student Affairs Services
+                  Student Affairs &Services Office
                 </a>
                 <a
                   href="https://www.facebook.com/profile.php?id=61583528066100"
@@ -424,7 +469,7 @@ const Navbar = ({ isTopBarVisible = true }) => {
                   rel="noopener noreferrer"
                   onClick={handleNavLinkClick}
                 >
-                  City College of Bayawan - Registrar
+                  Office of the Registrar
                 </a>
               </div>
             </div>

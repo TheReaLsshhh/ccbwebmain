@@ -348,37 +348,9 @@ const NewsEvents = () => {
         <div className="container">
           <div className="news-content">
             
-            {/* Announcements Section */}
-            <div className="announcements-section">
-              <h2>Announcements</h2>
-              {annLoading ? (
-                <div className="loading-container"><div className="loading-spinner"></div><p>Loading announcements...</p></div>
-              ) : annError ? (
-                <div className="error-container"><p className="error-message">{annError}</p></div>
-              ) : (
-                <div className={`announcements-grid ${isAnnouncementsVisible ? 'fade-in-visible' : ''}`}>
-                  {announcements.map(item => (
-                    <div key={item.id} className="announcement-item">
-                      <div className="announcement-icon">
-                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                        </svg>
-                      </div>
-                      <div className="announcement-content">
-                        <h4>{item.title}</h4>
-                        <p className="announcement-date">{formatDate(item.date)}</p>
-                        <p>{item.body}</p>
-                        <button className="read-more" onClick={() => openModal(item)}>Read More</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* School Events and Activities Section */}
             <div className="events-section">
-              <h2>School Events and Activities Calendar</h2>
+              <h2>Campus Calendar</h2>
               {eventsLoading ? (
                 <div className="loading-container"><div className="loading-spinner"></div><p>Loading events...</p></div>
               ) : eventsError ? (
@@ -468,6 +440,34 @@ const NewsEvents = () => {
                     <div className="legend-item"><span className="legend-chip chip-today">Today</span></div>
                     <div className="legend-item"><span className="legend-chip chip-weekend">Weekend</span></div>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Announcements Section */}
+            <div className="announcements-section">
+              <h2>Announcements</h2>
+              {annLoading ? (
+                <div className="loading-container"><div className="loading-spinner"></div><p>Loading announcements...</p></div>
+              ) : annError ? (
+                <div className="error-container"><p className="error-message">{annError}</p></div>
+              ) : (
+                <div className={`announcements-grid ${isAnnouncementsVisible ? 'fade-in-visible' : ''}`}>
+                  {announcements.map(item => (
+                    <div key={item.id} className="announcement-item">
+                      <div className="announcement-icon">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                      </div>
+                      <div className="announcement-content">
+                        <h4>{item.title}</h4>
+                        <p className="announcement-date">{formatDate(item.date)}</p>
+                        <p>{item.body}</p>
+                        <button className="read-more" onClick={() => openModal(item)}>Read More</button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

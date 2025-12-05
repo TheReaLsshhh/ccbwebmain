@@ -58,8 +58,17 @@ const AdminPage = () => {
       
       showAlert('info', 'Data Loaded', 'All data has been loaded successfully.');
     } catch (err) {
-      showAlert('error', 'Data Load Failed', `Failed to load data: ${err.message}`);
-      setError('Failed to load data: ' + err.message);
+      if (err.status === 401) {
+        // Session likely expired; force re-login
+        setIsAuthenticated(false);
+        setUser(null);
+        localStorage.removeItem('admin_user');
+        showAlert('warning', 'Session expired', 'Please log in again.');
+        setError('Session expired. Please log in again.');
+      } else {
+        showAlert('error', 'Data Load Failed', `Failed to load data: ${err.message}`);
+        setError('Failed to load data: ' + err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -101,17 +110,12 @@ const AdminPage = () => {
 
   const checkAuthentication = async () => {
     try {
-      // Check localStorage first
       const storedUser = localStorage.getItem('admin_user');
       if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-        setIsAuthenticated(true);
-        setCheckingAuth(false);
-        return;
+        // Optimistically show stored user while verifying session
+        setUser(JSON.parse(storedUser));
       }
 
-      // Check with server
       const response = await apiService.checkAuth();
       if (response.status === 'success' && response.authenticated) {
         setUser(response.user);
@@ -119,11 +123,13 @@ const AdminPage = () => {
         localStorage.setItem('admin_user', JSON.stringify(response.user));
       } else {
         setIsAuthenticated(false);
+        setUser(null);
         localStorage.removeItem('admin_user');
       }
     } catch (err) {
       console.error('Auth check failed:', err);
       setIsAuthenticated(false);
+      setUser(null);
       localStorage.removeItem('admin_user');
     } finally {
       setCheckingAuth(false);

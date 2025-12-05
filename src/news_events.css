@@ -402,6 +402,7 @@ html, body {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  margin-top: 24px;
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.3s ease-out;

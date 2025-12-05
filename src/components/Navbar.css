@@ -236,12 +236,14 @@
 }
 
 /* Services Dropdown */
-.services-dropdown-container {
+.services-dropdown-container,
+.admissions-dropdown-container {
   position: relative;
   display: inline-block;
 }
 
-.services-nav-link {
+.services-nav-link,
+.admissions-nav-link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -254,16 +256,19 @@
 }
 
 .services-dropdown-container:hover .dropdown-arrow,
-.services-dropdown-container:focus-within .dropdown-arrow {
+.services-dropdown-container:focus-within .dropdown-arrow,
+.admissions-dropdown-container:hover .dropdown-arrow,
+.admissions-dropdown-container:focus-within .dropdown-arrow {
   transform: rotate(180deg);
 }
 
-.services-dropdown {
+.services-dropdown,
+.admissions-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
   background-color: #fff;
-  min-width: 280px;
+  min-width: 210px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   z-index: 1005;
@@ -277,7 +282,10 @@
 
 .services-dropdown-container:hover .services-dropdown,
 .services-dropdown-container:focus-within .services-dropdown,
-.services-dropdown.dropdown-open {
+.services-dropdown.dropdown-open,
+.admissions-dropdown-container:hover .admissions-dropdown,
+.admissions-dropdown-container:focus-within .admissions-dropdown,
+.admissions-dropdown.dropdown-open {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
@@ -293,6 +301,7 @@
   transition: all 0.2s ease;
   border-bottom: 1px solid #f0f0f0;
   white-space: nowrap;
+  text-align: left;
 }
 
 .dropdown-item:last-child {
@@ -316,9 +325,12 @@
 }
 
 .secondary-nav-bar .date-display {
-  position: absolute;
-  right: 20px;
+  position: fixed;
+  top: 10px;
+  right: 12px;
   flex-shrink: 0;
+  z-index: 1100; /* keep above other header elements */
+  justify-content: flex-end;
 }
 
 .date-text {
@@ -590,7 +602,8 @@
   }
 
   .secondary-nav-bar .date-display {
-    right: 45px;
+    top: 10px;
+    right: 12px;
   }
 
   .secondary-nav-bar .top-link {
@@ -670,11 +683,13 @@
   }
 
   /* Services Dropdown Mobile */
-  .services-dropdown-container {
+  .services-dropdown-container,
+  .admissions-dropdown-container {
     width: 100%;
   }
 
-  .services-dropdown {
+  .services-dropdown,
+  .admissions-dropdown {
     position: relative;
     width: 100%;
     margin-top: 10px;
@@ -688,6 +703,7 @@
     color: #fff;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: 12px 20px;
+    text-align: left;
   }
 
   .dropdown-item:hover {
@@ -709,12 +725,13 @@
   }
 
   .secondary-nav-bar .date-display {
-    position: relative;
-    right: auto;
-    width: 100%;
-    justify-content: center;
-    margin-top: 5px;
-    order: 2;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: auto;
+    justify-content: flex-end;
+    margin-top: 0;
+    order: initial;
   }
 
   .secondary-nav-bar .date-text {
