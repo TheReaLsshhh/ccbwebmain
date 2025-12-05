@@ -527,7 +527,7 @@ const HomePage = () => {
         </svg>
 
         {/* Corner accent wreath */}
-        <div className="wreath-corner">
+        {/* <div className="wreath-corner">
           <svg className="wreath-corner-svg" viewBox="0 0 100 100">
             <circle
               cx="50"
@@ -558,7 +558,7 @@ const HomePage = () => {
               );
             })}
           </svg>
-        </div>
+        </div> */}
       </div>
 
       {/* Second Decorative Wreath Border - Bottom Left to Top Left to Bottom Right */}
@@ -821,69 +821,8 @@ const HomePage = () => {
       </video>
       <Navbar />
       <div className="homepage-content">
-        <div className="hero-section">
-          <div
-            className="hero-content"
-            style={{
-              marginLeft: "auto",
-              marginRight: "auto",
-              textAlign: "center",
-              maxWidth: "800px",
-            }}
-          >
-            <h1
-              className="hero-title"
-              style={{ textAlign: isMobile ? "center" : "center" }}
-            >
-              WELCOME TO
-            </h1>
-            <h2
-              className="hero-subtitle-combined"
-              style={{ textAlign: isMobile ? "center" : "center" }}
-            >
-              <span className="hero-subtitle-part1">CITY COLLEGE</span>{" "}
-              <span className="hero-subtitle-part2">OF BAYAWAN</span>
-            </h2>
-            <p
-              className="hero-tagline"
-              style={{ textAlign: isMobile ? "center" : "center" }}
-            >
-              Honus et Excellentia Ad Summum Bonum
-            </p>
-            <div
-              className="hero-buttons"
-              style={{
-                justifyContent: isMobile ? "center" : "center",
-                display: "flex",
-                gap: "20px",
-                flexWrap: "wrap",
-              }}
-            >
-              {showAudioButton && (
-                <button
-                  className="btn btn-audio"
-                  onClick={handleEnableAudio}
-                  style={{
-                    background: "linear-gradient(135deg, #ff8c00, #ff9f1a)",
-                    color: "white",
-                    border: "none",
-                    padding: "12px 24px",
-                    borderRadius: "8px",
-                    fontSize: "1rem",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    textDecoration: "none",
-                  }}
-                >
-                  🔊 Enable Audio
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Hero/Banner Section */}
+        <div className="hero-banner-section"></div>
 
         <div className="features-section">
           <div className="container">

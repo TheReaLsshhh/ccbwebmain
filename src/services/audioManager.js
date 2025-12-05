@@ -17,7 +17,7 @@ class AudioManager {
     // Always create a fresh audio element for each page load
     this.audio = new Audio('/sounds/JingleBells.mp3');
     this.audio.loop = false; // No looping - play only once
-    this.audio.volume = 0.9;
+    this.audio.volume = 0; // Set volume to 0 to avoid playing audio automatically
     this.audio.preload = 'metadata';
     
     // Mobile-specific settings for autoplay
