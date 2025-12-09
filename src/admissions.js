@@ -9,6 +9,7 @@ const Admissions = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isRequirementsNoteVisible, setIsRequirementsNoteVisible] = useState(false);
   const [isProcessTimelineVisible, setIsProcessTimelineVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('new-scholar');
 
   // Scroll-based navbar visibility
   useEffect(() => {
@@ -102,6 +103,38 @@ const Admissions = () => {
         </div>
       </section>
 
+      {/* Admissions Navigation Tabs */}
+      <section className="admissions-navigation">
+        <div className="container">
+          <div className="nav-tabs">
+            <button 
+              className={`nav-tab ${selectedCategory === 'new-scholar' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('new-scholar')}
+            >
+              New Student (Scholar)
+            </button>
+            <button 
+              className={`nav-tab ${selectedCategory === 'new-non-scholar' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('new-non-scholar')}
+            >
+              New Student (Non-Scholar)
+            </button>
+            <button 
+              className={`nav-tab ${selectedCategory === 'continuing-scholar' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('continuing-scholar')}
+            >
+              Continuing Student (Scholar)
+            </button>
+            <button 
+              className={`nav-tab ${selectedCategory === 'continuing-non-scholar' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('continuing-non-scholar')}
+            >
+              Continuing Student (Non-Scholar)
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Admissions Section */}
       <section className="section-admissions admissions-section">
         <div className="container">
@@ -115,23 +148,70 @@ const Admissions = () => {
               <div className="requirements-content">
                 <div className="general-requirements">
                   
-                  <div className="enrollment-requirements">
-                    <h4>REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Scholarship)</h4>
-                    <ul>
-                      <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
-                      <li>✓ Form 138- SHS Report Card (Original copy)</li>
-                      <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
-                      <li>✓ PSA Birth Certificate (Photocopy)</li>
-                      <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
-                      <li>✓ One (1) Long-size Brown Expanded Envelope</li>
-                    </ul>
-                    <h4>REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Non-Scholarship)</h4>
-                    <ul>
-                      <li>✓ Official Receipt for Tuition and Fees</li>
-                    </ul>
-                  </div>
+                  {/* New Student (Scholar) */}
+                  {selectedCategory === 'new-scholar' && (
+                    <div className="enrollment-requirements">
+                      <h4>REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Scholarship)</h4>
+                      <ul>
+                        <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
+                        <li>✓ Form 138- SHS Report Card (Original copy)</li>
+                        <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
+                        <li>✓ PSA Birth Certificate (Photocopy)</li>
+                        <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
+                        <li>✓ One (1) Long-size Brown Expanded Envelope</li>
+                      </ul>
+                    </div>
+                  )}
 
-                  <div className="transferee-requirements">
+                  {/* New Student (Non-Scholar) */}
+                  {selectedCategory === 'new-non-scholar' && (
+                    <div className="enrollment-requirements">
+                      <h4>REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Non-Scholarship)</h4>
+                      <ul>
+                        <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
+                        <li>✓ Form 138- SHS Report Card (Original copy)</li>
+                        <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
+                        <li>✓ PSA Birth Certificate (Photocopy)</li>
+                        <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
+                        <li>✓ One (1) Long-size Brown Expanded Envelope</li>
+                        <li>✓ Official Receipt for Tuition and Fees</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Continuing Student (Scholar) */}
+                  {selectedCategory === 'continuing-scholar' && (
+                    <div className="enrollment-requirements">
+                      <h4>REQUIREMENTS FOR ENROLLMENT OF CONTINUING STUDENTS (Scholarship)</h4>
+                      <ul>
+                        <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
+                        <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
+                        <li>✓ PSA Birth Certificate (Photocopy)</li>
+                        <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
+                        <li>✓ One (1) Long-size Brown Expanded Envelope</li>
+                        <li>✓ Previous Semester Grades/Report Card</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Continuing Student (Non-Scholar) */}
+                  {selectedCategory === 'continuing-non-scholar' && (
+                    <div className="enrollment-requirements">
+                      <h4>REQUIREMENTS FOR ENROLLMENT OF CONTINUING STUDENTS (Non-Scholarship)</h4>
+                      <ul>
+                        <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
+                        <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
+                        <li>✓ PSA Birth Certificate (Photocopy)</li>
+                        <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
+                        <li>✓ One (1) Long-size Brown Expanded Envelope</li>
+                        <li>✓ Previous Semester Grades/Report Card</li>
+                        <li>✓ Official Receipt for Tuition and Fees</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Transferee Requirements (kept for reference, can be shown if needed) */}
+                  <div className="transferee-requirements" style={{ display: 'none' }}>
                     <h4>REQUIREMENTS FOR ENROLLMENT OF TRANSFEREES</h4>
                     <ul>
                       <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>

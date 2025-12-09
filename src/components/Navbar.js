@@ -11,7 +11,6 @@ const Navbar = ({ isTopBarVisible = true }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
-  const [isAdmissionsDropdownOpen, setIsAdmissionsDropdownOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     const newMenuState = !isMobileMenuOpen;
@@ -365,57 +364,13 @@ const Navbar = ({ isTopBarVisible = true }) => {
             >
               ACADEMICS
             </a>
-            <div
-              className="admissions-dropdown-container"
-              onMouseEnter={() => setIsAdmissionsDropdownOpen(true)}
-              onMouseLeave={() => setIsAdmissionsDropdownOpen(false)}
+            <a
+              href="/admissions"
+              className={getActiveNavClass("/admissions")}
+              onClick={handleNavLinkClick}
             >
-              <a
-                href="/admissions"
-                className="nav-link admissions-nav-link"
-                onMouseEnter={() => setIsAdmissionsDropdownOpen(true)}
-                onClick={handleNavLinkClick}
-              >
-                ADMISSIONS
-                <span className="dropdown-arrow">▼</span>
-              </a>
-              <div
-                className={`admissions-dropdown ${
-                  isAdmissionsDropdownOpen ? "dropdown-open" : ""
-                }`}
-                onMouseEnter={() => setIsAdmissionsDropdownOpen(true)}
-                onMouseLeave={() => setIsAdmissionsDropdownOpen(false)}
-              >
-                <a
-                  href="/admissions#new-student-scholar"
-                  className="dropdown-item"
-                  onClick={handleNavLinkClick}
-                >
-                  New Student (Scholar)
-                </a>
-                <a
-                  href="/admissions#new-student-non-scholar"
-                  className="dropdown-item"
-                  onClick={handleNavLinkClick}
-                >
-                  New Student (Non-Scholar)
-                </a>
-                <a
-                  href="/admissions#continuing-student-scholar"
-                  className="dropdown-item"
-                  onClick={handleNavLinkClick}
-                >
-                  Continuing Student (Scholar)
-                </a>
-                <a
-                  href="/admissions#continuing-student-non-scholar"
-                  className="dropdown-item"
-                  onClick={handleNavLinkClick}
-                >
-                  Continuing Student (Non-Scholar)
-                </a>
-              </div>
-            </div>
+              ADMISSIONS
+            </a>
             {/* Services Dropdown */}
             <div 
               className="services-dropdown-container"
