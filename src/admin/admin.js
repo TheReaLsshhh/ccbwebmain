@@ -30,6 +30,9 @@ const AdminPage = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [personnel, setPersonnel] = useState([]);
+  const [admissionRequirements, setAdmissionRequirements] = useState([]);
+  const [enrollmentSteps, setEnrollmentSteps] = useState([]);
+  const [admissionNotes, setAdmissionNotes] = useState([]);
 
   // Form states
   const [showForm, setShowForm] = useState(false);
@@ -40,13 +43,16 @@ const AdminPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const [programsRes, eventsRes, achievementsRes, announcementsRes, departmentsRes, personnelRes] = await Promise.all([
+      const [programsRes, eventsRes, achievementsRes, announcementsRes, departmentsRes, personnelRes, requirementsRes, stepsRes, notesRes] = await Promise.all([
         apiService.getAdminAcademicPrograms(),
         apiService.getAdminEvents(),
         apiService.getAdminAchievements(),
         apiService.getAdminAnnouncements(),
         apiService.getAdminDepartments(),
-        apiService.getAdminPersonnel()
+        apiService.getAdminPersonnel(),
+        apiService.getAdminAdmissionRequirements(),
+        apiService.getAdminEnrollmentSteps(),
+        apiService.getAdminAdmissionNotes()
       ]);
 
       setAcademicPrograms(programsRes.programs || []);
@@ -55,6 +61,9 @@ const AdminPage = () => {
       setAnnouncements(announcementsRes.announcements || []);
       setDepartments(departmentsRes.departments || []);
       setPersonnel(personnelRes.personnel || []);
+      setAdmissionRequirements(requirementsRes.requirements || []);
+      setEnrollmentSteps(stepsRes.steps || []);
+      setAdmissionNotes(notesRes.notes || []);
       
       showAlert('info', 'Data Loaded', 'All data has been loaded successfully.');
     } catch (err) {
@@ -186,7 +195,21 @@ const AdminPage = () => {
 
   const handleCreate = () => {
     setEditingItem(null);
-    setFormData({});
+    // Initialize formData with default values based on active tab
+    const defaultFormData = {};
+    if (activeTab === 'admission-requirements') {
+      defaultFormData.category = 'new-scholar';
+      defaultFormData.is_active = true;
+      defaultFormData.display_order = 0;
+    } else if (activeTab === 'enrollment-steps') {
+      defaultFormData.step_number = 1;
+      defaultFormData.is_active = true;
+      defaultFormData.display_order = 0;
+    } else if (activeTab === 'admission-notes') {
+      defaultFormData.is_active = true;
+      defaultFormData.display_order = 0;
+    }
+    setFormData(defaultFormData);
     setShowForm(true);
     showAlert('info', 'Create Mode', `Creating new ${activeTab.replace('-', ' ')}`);
   };
@@ -194,9 +217,14 @@ const AdminPage = () => {
   const handleEdit = (item) => {
     console.log('Editing item:', item);
     setEditingItem(item);
-    setFormData(item);
+    // For admission requirements, ensure we have the requirement_text field
+    const editData = { ...item };
+    if (activeTab === 'admission-requirements' && !editData.requirement_text) {
+      editData.requirement_text = item.requirement_text || '';
+    }
+    setFormData(editData);
     setShowForm(true);
-    showAlert('info', 'Edit Mode', `Editing ${activeTab.replace('-', ' ')}: ${item.title || item.name || item.full_name || 'Item'}`);
+    showAlert('info', 'Edit Mode', `Editing ${activeTab.replace('-', ' ')}: ${item.title || item.name || item.full_name || item.requirement_text || 'Item'}`);
   };
 
   const handleDelete = async (item, type) => {
@@ -234,6 +262,18 @@ const AdminPage = () => {
         case 'personnel':
           await apiService.deletePersonnel(item.id);
           setPersonnel(prev => prev.filter(p => p.id !== item.id));
+          break;
+        case 'admission-requirements':
+          await apiService.deleteAdmissionRequirement(item.id);
+          setAdmissionRequirements(prev => prev.filter(r => r.id !== item.id));
+          break;
+        case 'enrollment-steps':
+          await apiService.deleteEnrollmentStep(item.id);
+          setEnrollmentSteps(prev => prev.filter(s => s.id !== item.id));
+          break;
+        case 'admission-notes':
+          await apiService.deleteAdmissionNote(item.id);
+          setAdmissionNotes(prev => prev.filter(n => n.id !== item.id));
           break;
         default:
           throw new Error(`Unknown type: ${type}`);
@@ -390,6 +430,55 @@ const AdminPage = () => {
             setPersonnel(prev => [...prev, result.personnel]);
           }
           break;
+        case 'admission-requirements':
+          const requirementData = {
+            category: formData.category || 'new-scholar', // Ensure category is always set
+            requirement_text: formData.requirement_text || '',
+            is_active: !!formData.is_active,
+            display_order: Number(formData.display_order) || 0
+          };
+          
+          if (isEditing) {
+            result = await apiService.updateAdmissionRequirement(editingItem.id, requirementData);
+            setAdmissionRequirements(prev => prev.map(r => r.id === editingItem.id ? result.requirement : r));
+          } else {
+            result = await apiService.createAdmissionRequirement(requirementData);
+            setAdmissionRequirements(prev => [...prev, result.requirement]);
+          }
+          break;
+        case 'enrollment-steps':
+          const stepData = {
+            step_number: Number(formData.step_number) || 1,
+            title: formData.title || '',
+            description: formData.description || '',
+            is_active: !!formData.is_active,
+            display_order: Number(formData.display_order) || 0
+          };
+          
+          if (isEditing) {
+            result = await apiService.updateEnrollmentStep(editingItem.id, stepData);
+            setEnrollmentSteps(prev => prev.map(s => s.id === editingItem.id ? result.step : s));
+          } else {
+            result = await apiService.createEnrollmentStep(stepData);
+            setEnrollmentSteps(prev => [...prev, result.step]);
+          }
+          break;
+        case 'admission-notes':
+          const noteData = {
+            title: formData.title || '',
+            note_text: formData.note_text || formData.body || '',
+            is_active: !!formData.is_active,
+            display_order: Number(formData.display_order) || 0
+          };
+          
+          if (isEditing) {
+            result = await apiService.updateAdmissionNote(editingItem.id, noteData);
+            setAdmissionNotes(prev => prev.map(n => n.id === editingItem.id ? result.note : n));
+          } else {
+            result = await apiService.createAdmissionNote(noteData);
+            setAdmissionNotes(prev => [...prev, result.note]);
+          }
+          break;
         default:
           throw new Error(`Unknown active tab: ${activeTab}`);
       }
@@ -463,6 +552,27 @@ const AdminPage = () => {
           <div className="stat-content">
             <h3>{personnel.length}</h3>
             <p>Personnel</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon"><i className="fas fa-file-alt"></i></div>
+          <div className="stat-content">
+            <h3>{admissionRequirements.length}</h3>
+            <p>Admission Requirements</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon"><i className="fas fa-list-ol"></i></div>
+          <div className="stat-content">
+            <h3>{enrollmentSteps.length}</h3>
+            <p>Enrollment Steps</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon"><i className="fas fa-sticky-note"></i></div>
+          <div className="stat-content">
+            <h3>{admissionNotes.length}</h3>
+            <p>Admission Notes</p>
           </div>
         </div>
       </div>
@@ -579,6 +689,12 @@ const AdminPage = () => {
         return ['Name', 'Type', 'Head', 'Office', 'Status'];
       case 'personnel':
         return ['Name', 'Department', 'Title', 'Position Type', 'Status'];
+      case 'admission-requirements':
+        return ['Category', 'Requirement', 'Status'];
+      case 'enrollment-steps':
+        return ['Step', 'Title', 'Status'];
+      case 'admission-notes':
+        return ['Title', 'Status'];
       default:
         return [];
     }
@@ -633,6 +749,23 @@ const AdminPage = () => {
             item.position_type === 'administrative' ? 'Administrative' : 'Support',
           item.is_active ? 'Active' : 'Inactive'
         ];
+      case 'admission-requirements':
+        return [
+          item.category_display || item.category || 'N/A',
+          item.requirement_text || 'N/A',
+          item.is_active ? 'Active' : 'Inactive'
+        ];
+      case 'enrollment-steps':
+        return [
+          item.step_number || 'N/A',
+          item.title || 'N/A',
+          item.is_active ? 'Active' : 'Inactive'
+        ];
+      case 'admission-notes':
+        return [
+          item.title || 'N/A',
+          item.is_active ? 'Active' : 'Inactive'
+        ];
       default:
         return [];
     }
@@ -672,7 +805,10 @@ const AdminPage = () => {
       { key: 'achievements', label: 'Achievements', icon: 'fas fa-trophy' },
       { key: 'announcements', label: 'Announcements', icon: 'fas fa-bullhorn' },
       { key: 'departments', label: 'Departments', icon: 'fas fa-building' },
-      { key: 'personnel', label: 'Personnel', icon: 'fas fa-users' }
+      { key: 'personnel', label: 'Personnel', icon: 'fas fa-users' },
+      { key: 'admission-requirements', label: 'Admission Requirements', icon: 'fas fa-file-alt' },
+      { key: 'enrollment-steps', label: 'Enrollment Steps', icon: 'fas fa-list-ol' },
+      { key: 'admission-notes', label: 'Admission Notes', icon: 'fas fa-sticky-note' }
     ];
 
     return (
@@ -1398,6 +1534,172 @@ const AdminPage = () => {
             </div>
           </>
         );
+      case 'admission-requirements':
+        return (
+          <>
+            <div className="form-group">
+              <label>Category *</label>
+              <select
+                name="category"
+                value={formData.category || 'new-scholar'}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="new-scholar">New Student (Scholar)</option>
+                <option value="new-non-scholar">New Student (Non-Scholar)</option>
+                <option value="continuing-scholar">Continuing Student (Scholar)</option>
+                <option value="continuing-non-scholar">Continuing Student (Non-Scholar)</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Requirements List *</label>
+              <textarea
+                name="requirement_text"
+                value={formData.requirement_text || ''}
+                onChange={handleInputChange}
+                required
+                rows="8"
+                placeholder="Enter requirements, one per line. All requirements will be saved as a single record.&#10;&#10;Example:&#10;✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)&#10;✓ Form 138- SHS Report Card (Original copy)&#10;✓ Certificate of GOOD MORAL CHARACTER (Original copy)"
+                style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}
+              />
+              <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                Enter each requirement on a new line. All requirements will be saved as one record and displayed as a list on the admissions page.
+              </small>
+            </div>
+            <div className="form-row-inline">
+            <div className="form-group">
+              <label>Display Order</label>
+              <input
+                type="number"
+                name="display_order"
+                value={formData.display_order || 0}
+                onChange={handleInputChange}
+                min="0"
+              />
+            </div>
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    checked={formData.is_active || false}
+                    onChange={handleInputChange}
+                  />
+                  Active
+                </label>
+              </div>
+            </div>
+          </>
+        );
+      case 'enrollment-steps':
+        return (
+          <>
+            <div className="form-group">
+              <label>Step Number *</label>
+              <input
+                type="number"
+                name="step_number"
+                value={formData.step_number || 1}
+                onChange={handleInputChange}
+                required
+                min="1"
+              />
+            </div>
+            <div className="form-group">
+              <label>Title *</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title || ''}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Description *</label>
+              <textarea
+                name="description"
+                value={formData.description || ''}
+                onChange={handleInputChange}
+                required
+                rows="4"
+                placeholder="Enter step description (supports line breaks)"
+              />
+            </div>
+            <div className="form-row-inline">
+              <div className="form-group">
+                <label>Display Order</label>
+                <input
+                  type="number"
+                  name="display_order"
+                  value={formData.display_order || 0}
+                  onChange={handleInputChange}
+                  min="0"
+                />
+              </div>
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    checked={formData.is_active || false}
+                    onChange={handleInputChange}
+                  />
+                  Active
+                </label>
+              </div>
+            </div>
+          </>
+        );
+      case 'admission-notes':
+        return (
+          <>
+            <div className="form-group">
+              <label>Title *</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title || ''}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Note Text *</label>
+              <textarea
+                name="note_text"
+                value={formData.note_text || formData.body || ''}
+                onChange={handleInputChange}
+                required
+                rows="4"
+                placeholder="Enter note content (one item per line for list format)"
+              />
+            </div>
+            <div className="form-row-inline">
+              <div className="form-group">
+                <label>Display Order</label>
+                <input
+                  type="number"
+                  name="display_order"
+                  value={formData.display_order || 0}
+                  onChange={handleInputChange}
+                  min="0"
+                />
+              </div>
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    checked={formData.is_active || false}
+                    onChange={handleInputChange}
+                  />
+                  Active
+                </label>
+              </div>
+            </div>
+          </>
+        );
       default:
         return null;
     }
@@ -1529,6 +1831,9 @@ const AdminPage = () => {
             {activeTab === 'announcements' && renderDataTable(announcements, 'announcements')}
             {activeTab === 'departments' && renderDataTable(departments, 'departments')}
             {activeTab === 'personnel' && renderDataTable(personnel, 'personnel')}
+            {activeTab === 'admission-requirements' && renderDataTable(admissionRequirements, 'admission-requirements')}
+            {activeTab === 'enrollment-steps' && renderDataTable(enrollmentSteps, 'enrollment-steps')}
+            {activeTab === 'admission-notes' && renderDataTable(admissionNotes, 'admission-notes')}
           </div>
         </div>
 

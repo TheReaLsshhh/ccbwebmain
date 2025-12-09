@@ -107,6 +107,81 @@ class ApiService {
         return this.makeRequest('/admissions-info/');
     }
 
+    // Admin: Admission Requirements CRUD
+    async getAdminAdmissionRequirements() {
+        return this.makeRequest('/admin/admission-requirements/');
+    }
+
+    async createAdmissionRequirement(payload) {
+        return this.makeRequest('/admin/admission-requirements/create/', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async updateAdmissionRequirement(requirementId, payload) {
+        return this.makeRequest(`/admin/admission-requirements/${requirementId}/`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async deleteAdmissionRequirement(requirementId) {
+        return this.makeRequest(`/admin/admission-requirements/${requirementId}/delete/`, {
+            method: 'DELETE',
+        });
+    }
+
+    // Admin: Enrollment Process Steps CRUD
+    async getAdminEnrollmentSteps() {
+        return this.makeRequest('/admin/enrollment-steps/');
+    }
+
+    async createEnrollmentStep(payload) {
+        return this.makeRequest('/admin/enrollment-steps/create/', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async updateEnrollmentStep(stepId, payload) {
+        return this.makeRequest(`/admin/enrollment-steps/${stepId}/`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async deleteEnrollmentStep(stepId) {
+        return this.makeRequest(`/admin/enrollment-steps/${stepId}/delete/`, {
+            method: 'DELETE',
+        });
+    }
+
+    // Admin: Admission Notes CRUD
+    async getAdminAdmissionNotes() {
+        return this.makeRequest('/admin/admission-notes/');
+    }
+
+    async createAdmissionNote(payload) {
+        return this.makeRequest('/admin/admission-notes/create/', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async updateAdmissionNote(noteId, payload) {
+        return this.makeRequest(`/admin/admission-notes/${noteId}/`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async deleteAdmissionNote(noteId) {
+        return this.makeRequest(`/admin/admission-notes/${noteId}/delete/`, {
+            method: 'DELETE',
+        });
+    }
+
     // Removed admissions important dates public API
 
     // Get downloads

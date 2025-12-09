@@ -303,3 +303,68 @@ class Personnel(models.Model):
         if self.specialization:
             return f"{self.title} - {self.specialization}"
         return self.title
+
+
+class AdmissionRequirement(models.Model):
+    """Model for admission requirements by category"""
+    
+    CATEGORY_CHOICES = [
+        ('new-scholar', 'New Student (Scholar)'),
+        ('new-non-scholar', 'New Student (Non-Scholar)'),
+        ('continuing-scholar', 'Continuing Student (Scholar)'),
+        ('continuing-non-scholar', 'Continuing Student (Non-Scholar)'),
+    ]
+    
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, help_text="Student category")
+    requirement_text = models.TextField(help_text="Requirement description")
+    display_order = models.PositiveIntegerField(default=0, help_text="Order for display")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['category', 'display_order', 'requirement_text']
+        verbose_name = 'Admission Requirement'
+        verbose_name_plural = 'Admission Requirements'
+    
+    def __str__(self):
+        return f"{self.get_category_display()}: {self.requirement_text[:50]}..."
+
+
+class EnrollmentProcessStep(models.Model):
+    """Model for enrollment process steps"""
+    
+    step_number = models.PositiveIntegerField(help_text="Step number in the process")
+    title = models.CharField(max_length=200, help_text="Step title")
+    description = models.TextField(help_text="Step description")
+    display_order = models.PositiveIntegerField(default=0, help_text="Order for display")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['display_order', 'step_number']
+        verbose_name = 'Enrollment Process Step'
+        verbose_name_plural = 'Enrollment Process Steps'
+    
+    def __str__(self):
+        return f"Step {self.step_number}: {self.title}"
+
+
+class AdmissionNote(models.Model):
+    """Model for important admission notes"""
+    
+    title = models.CharField(max_length=200, help_text="Note title")
+    note_text = models.TextField(help_text="Note content")
+    display_order = models.PositiveIntegerField(default=0, help_text="Order for display")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['display_order', 'title']
+        verbose_name = 'Admission Note'
+        verbose_name_plural = 'Admission Notes'
+    
+    def __str__(self):
+        return self.title

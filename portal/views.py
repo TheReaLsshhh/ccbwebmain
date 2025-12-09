@@ -18,7 +18,7 @@ from django.conf import settings
 from functools import wraps
 import datetime
 from email.mime.image import MIMEImage
-from .models import AcademicProgram, ProgramSpecialization, Announcement, Event, Achievement, ContactSubmission, EmailVerification, Department, Personnel
+from .models import AcademicProgram, ProgramSpecialization, Announcement, Event, Achievement, ContactSubmission, EmailVerification, Department, Personnel, AdmissionRequirement, EnrollmentProcessStep, AdmissionNote
 import os
 
 
@@ -264,38 +264,57 @@ def api_news_events(request):
 @require_http_methods(["GET"])
 def api_admissions_info(request):
     """Get admissions information"""
-    admissions_data = {
-        'requirements': [
-            'Completed Application Form',
-            'High School Diploma or Equivalent',
-            'Official Transcript of Records',
-            'Certificate of Good Moral Character',
-            'Medical Certificate',
-            '2x2 ID Pictures (4 copies)',
-            'Birth Certificate (NSO/PSA)'
-        ],
-        'process_steps': [
+    # Get requirements grouped by category
+    requirements_by_category = {}
+    for category, _ in AdmissionRequirement.CATEGORY_CHOICES:
+        requirements = AdmissionRequirement.objects.filter(
+            category=category,
+            is_active=True
+        ).order_by('display_order', 'id')
+        requirements_by_category[category] = [
             {
-                'step': 1,
-                'title': 'Submit Application',
-                'description': 'Complete and submit your application form with all required documents'
-            },
-            {
-                'step': 2,
-                'title': 'Entrance Examination',
-                'description': 'Take the college entrance examination on the scheduled date'
-            },
-            {
-                'step': 3,
-                'title': 'Interview',
-                'description': 'Attend the scheduled interview with the admissions committee'
-            },
-            {
-                'step': 4,
-                'title': 'Enrollment',
-                'description': 'Complete enrollment procedures and pay necessary fees'
+                'id': req.id,
+                'text': req.requirement_text,
+                'display_order': req.display_order
             }
+            for req in requirements
         ]
+    
+    # Get enrollment process steps
+    process_steps = EnrollmentProcessStep.objects.filter(
+        is_active=True
+    ).order_by('display_order', 'step_number')
+    
+    process_steps_data = [
+        {
+            'id': step.id,
+            'step_number': step.step_number,
+            'title': step.title,
+            'description': step.description,
+            'display_order': step.display_order
+        }
+        for step in process_steps
+    ]
+    
+    # Get admission notes
+    notes = AdmissionNote.objects.filter(
+        is_active=True
+    ).order_by('display_order', 'id')
+    
+    notes_data = [
+        {
+            'id': note.id,
+            'title': note.title,
+            'text': note.note_text,
+            'display_order': note.display_order
+        }
+        for note in notes
+    ]
+    
+    admissions_data = {
+        'requirements': requirements_by_category,
+        'process_steps': process_steps_data,
+        'notes': notes_data
     }
     return JsonResponse(admissions_data)
 
@@ -2551,6 +2570,345 @@ def api_delete_personnel(request, personnel_id):
         return JsonResponse({
             'status': 'success',
             'message': 'Personnel deleted successfully'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+# Admin: Admissions Requirements CRUD
+@login_required_json
+@require_http_methods(["GET"])
+def api_admin_admission_requirements(request):
+    """Get all admission requirements (admin)"""
+    requirements = AdmissionRequirement.objects.all().order_by('category', 'display_order', 'id')
+    requirements_data = [
+        {
+            'id': req.id,
+            'category': req.category,
+            'category_display': req.get_category_display(),
+            'requirement_text': req.requirement_text,
+            'display_order': req.display_order,
+            'is_active': req.is_active,
+            'created_at': req.created_at.isoformat(),
+            'updated_at': req.updated_at.isoformat(),
+        }
+        for req in requirements
+    ]
+    return JsonResponse({'requirements': requirements_data})
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["POST"])
+def api_create_admission_requirement(request):
+    """Create a new admission requirement (saves list format as single record)"""
+    try:
+        data = json.loads(request.body)
+        
+        # Validate required fields
+        if not data.get('category'):
+            return JsonResponse({'status': 'error', 'message': 'Category is required'}, status=400)
+        if not data.get('requirement_text'):
+            return JsonResponse({'status': 'error', 'message': 'Requirement text is required'}, status=400)
+        
+        # Save the entire text (including newlines) as a single record
+        requirement = AdmissionRequirement.objects.create(
+            category=data.get('category'),
+            requirement_text=data.get('requirement_text', '').strip(),
+            display_order=data.get('display_order', 0),
+            is_active=data.get('is_active', True)
+        )
+        return JsonResponse({
+            'status': 'success',
+            'requirement': {
+                'id': requirement.id,
+                'category': requirement.category,
+                'category_display': requirement.get_category_display(),
+                'requirement_text': requirement.requirement_text,
+                'display_order': requirement.display_order,
+                'is_active': requirement.is_active,
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["PUT"])
+def api_update_admission_requirement(request, requirement_id):
+    """Update an admission requirement"""
+    try:
+        requirement = get_object_or_404(AdmissionRequirement, id=requirement_id)
+        data = json.loads(request.body)
+        
+        if 'category' in data:
+            requirement.category = data.get('category')
+        if 'requirement_text' in data:
+            requirement.requirement_text = data.get('requirement_text', '').strip()
+        if 'display_order' in data:
+            requirement.display_order = data.get('display_order', 0)
+        if 'is_active' in data:
+            requirement.is_active = data.get('is_active', True)
+        
+        requirement.save()
+        
+        return JsonResponse({
+            'status': 'success',
+            'requirement': {
+                'id': requirement.id,
+                'category': requirement.category,
+                'category_display': requirement.get_category_display(),
+                'requirement_text': requirement.requirement_text,
+                'display_order': requirement.display_order,
+                'is_active': requirement.is_active,
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["DELETE"])
+def api_delete_admission_requirement(request, requirement_id):
+    """Delete an admission requirement"""
+    try:
+        requirement = get_object_or_404(AdmissionRequirement, id=requirement_id)
+        requirement.delete()
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Admission requirement deleted successfully'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+# Admin: Enrollment Process Steps CRUD
+@login_required_json
+@require_http_methods(["GET"])
+def api_admin_enrollment_steps(request):
+    """Get all enrollment process steps (admin)"""
+    steps = EnrollmentProcessStep.objects.all().order_by('display_order', 'step_number')
+    steps_data = [
+        {
+            'id': step.id,
+            'step_number': step.step_number,
+            'title': step.title,
+            'description': step.description,
+            'display_order': step.display_order,
+            'is_active': step.is_active,
+            'created_at': step.created_at.isoformat(),
+            'updated_at': step.updated_at.isoformat(),
+        }
+        for step in steps
+    ]
+    return JsonResponse({'steps': steps_data})
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["POST"])
+def api_create_enrollment_step(request):
+    """Create a new enrollment process step"""
+    try:
+        data = json.loads(request.body)
+        
+        # Validate required fields
+        if not data.get('step_number'):
+            return JsonResponse({'status': 'error', 'message': 'Step number is required'}, status=400)
+        if not data.get('title'):
+            return JsonResponse({'status': 'error', 'message': 'Title is required'}, status=400)
+        if not data.get('description'):
+            return JsonResponse({'status': 'error', 'message': 'Description is required'}, status=400)
+        
+        step = EnrollmentProcessStep.objects.create(
+            step_number=data.get('step_number'),
+            title=data.get('title', '').strip(),
+            description=data.get('description', '').strip(),
+            display_order=data.get('display_order', 0),
+            is_active=data.get('is_active', True)
+        )
+        return JsonResponse({
+            'status': 'success',
+            'step': {
+                'id': step.id,
+                'step_number': step.step_number,
+                'title': step.title,
+                'description': step.description,
+                'display_order': step.display_order,
+                'is_active': step.is_active,
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["PUT"])
+def api_update_enrollment_step(request, step_id):
+    """Update an enrollment process step"""
+    try:
+        step = get_object_or_404(EnrollmentProcessStep, id=step_id)
+        data = json.loads(request.body)
+        
+        if 'step_number' in data:
+            step.step_number = data.get('step_number')
+        if 'title' in data:
+            step.title = data.get('title', '').strip()
+        if 'description' in data:
+            step.description = data.get('description', '').strip()
+        if 'display_order' in data:
+            step.display_order = data.get('display_order', 0)
+        if 'is_active' in data:
+            step.is_active = data.get('is_active', True)
+        
+        step.save()
+        
+        return JsonResponse({
+            'status': 'success',
+            'step': {
+                'id': step.id,
+                'step_number': step.step_number,
+                'title': step.title,
+                'description': step.description,
+                'display_order': step.display_order,
+                'is_active': step.is_active,
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["DELETE"])
+def api_delete_enrollment_step(request, step_id):
+    """Delete an enrollment process step"""
+    try:
+        step = get_object_or_404(EnrollmentProcessStep, id=step_id)
+        step.delete()
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Enrollment step deleted successfully'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+# Admin: Admission Notes CRUD
+@login_required_json
+@require_http_methods(["GET"])
+def api_admin_admission_notes(request):
+    """Get all admission notes (admin)"""
+    notes = AdmissionNote.objects.all().order_by('display_order', 'id')
+    notes_data = [
+        {
+            'id': note.id,
+            'title': note.title,
+            'note_text': note.note_text,
+            'display_order': note.display_order,
+            'is_active': note.is_active,
+            'created_at': note.created_at.isoformat(),
+            'updated_at': note.updated_at.isoformat(),
+        }
+        for note in notes
+    ]
+    return JsonResponse({'notes': notes_data})
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["POST"])
+def api_create_admission_note(request):
+    """Create a new admission note"""
+    try:
+        data = json.loads(request.body)
+        
+        # Validate required fields
+        if not data.get('title'):
+            return JsonResponse({'status': 'error', 'message': 'Title is required'}, status=400)
+        if not data.get('note_text'):
+            return JsonResponse({'status': 'error', 'message': 'Note text is required'}, status=400)
+        
+        note = AdmissionNote.objects.create(
+            title=data.get('title', '').strip(),
+            note_text=data.get('note_text', '').strip(),
+            display_order=data.get('display_order', 0),
+            is_active=data.get('is_active', True)
+        )
+        return JsonResponse({
+            'status': 'success',
+            'note': {
+                'id': note.id,
+                'title': note.title,
+                'note_text': note.note_text,
+                'display_order': note.display_order,
+                'is_active': note.is_active,
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["PUT"])
+def api_update_admission_note(request, note_id):
+    """Update an admission note"""
+    try:
+        note = get_object_or_404(AdmissionNote, id=note_id)
+        data = json.loads(request.body)
+        
+        if 'title' in data:
+            note.title = data.get('title', '').strip()
+        if 'note_text' in data:
+            note.note_text = data.get('note_text', '').strip()
+        if 'display_order' in data:
+            note.display_order = data.get('display_order', 0)
+        if 'is_active' in data:
+            note.is_active = data.get('is_active', True)
+        
+        note.save()
+        
+        return JsonResponse({
+            'status': 'success',
+            'note': {
+                'id': note.id,
+                'title': note.title,
+                'note_text': note.note_text,
+                'display_order': note.display_order,
+                'is_active': note.is_active,
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@csrf_exempt
+@login_required_json
+@require_http_methods(["DELETE"])
+def api_delete_admission_note(request, note_id):
+    """Delete an admission note"""
+    try:
+        note = get_object_or_404(AdmissionNote, id=note_id)
+        note.delete()
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Admission note deleted successfully'
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

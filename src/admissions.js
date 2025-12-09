@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop';
 import Footer from './components/footer';
+import apiService from './services/api';
 import './admissions.css';
 
 const Admissions = () => {
@@ -10,6 +11,13 @@ const Admissions = () => {
   const [isRequirementsNoteVisible, setIsRequirementsNoteVisible] = useState(false);
   const [isProcessTimelineVisible, setIsProcessTimelineVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('new-scholar');
+  const [admissionsData, setAdmissionsData] = useState({
+    requirements: {},
+    processSteps: [],
+    notes: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Scroll-based navbar visibility
   useEffect(() => {
@@ -88,6 +96,35 @@ const Admissions = () => {
     };
   }, []);
 
+  // Fetch admissions data
+  useEffect(() => {
+    const fetchAdmissionsData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await apiService.getAdmissionsInfo();
+        setAdmissionsData({
+          requirements: data.requirements || {},
+          processSteps: data.process_steps || [],
+          notes: data.notes || []
+        });
+      } catch (err) {
+        console.error('Error fetching admissions data:', err);
+        setError('Failed to load admissions information. Please try again later.');
+        // Set default/fallback data
+        setAdmissionsData({
+          requirements: {},
+          processSteps: [],
+          notes: []
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAdmissionsData();
+  }, []);
+
   return (
     <div className="App admissions-page">
       <Navbar isTopBarVisible={isTopBarVisible} />
@@ -147,102 +184,91 @@ const Admissions = () => {
               
               <div className="requirements-content">
                 <div className="general-requirements">
-                  
-                  {/* New Student (Scholar) */}
-                  {selectedCategory === 'new-scholar' && (
-                    <div className="enrollment-requirements">
-                      <h4>REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Scholarship)</h4>
-                      <ul>
-                        <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
-                        <li>✓ Form 138- SHS Report Card (Original copy)</li>
-                        <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
-                        <li>✓ PSA Birth Certificate (Photocopy)</li>
-                        <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
-                        <li>✓ One (1) Long-size Brown Expanded Envelope</li>
-                      </ul>
+                  {loading ? (
+                    <div style={{ textAlign: 'center', padding: '2rem' }}>
+                      <p>Loading requirements...</p>
                     </div>
-                  )}
-
-                  {/* New Student (Non-Scholar) */}
-                  {selectedCategory === 'new-non-scholar' && (
-                    <div className="enrollment-requirements">
-                      <h4>REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Non-Scholarship)</h4>
-                      <ul>
-                        <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
-                        <li>✓ Form 138- SHS Report Card (Original copy)</li>
-                        <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
-                        <li>✓ PSA Birth Certificate (Photocopy)</li>
-                        <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
-                        <li>✓ One (1) Long-size Brown Expanded Envelope</li>
-                        <li>✓ Official Receipt for Tuition and Fees</li>
-                      </ul>
+                  ) : error ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: '#dc3545' }}>
+                      <p>{error}</p>
                     </div>
+                  ) : (
+                    <>
+                      {/* Dynamic Requirements by Category */}
+                      {selectedCategory && admissionsData.requirements[selectedCategory] && admissionsData.requirements[selectedCategory].length > 0 && (
+                        <div className="enrollment-requirements">
+                          <h4>
+                            {selectedCategory === 'new-scholar' && 'REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Scholarship)'}
+                            {selectedCategory === 'new-non-scholar' && 'REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Non-Scholarship)'}
+                            {selectedCategory === 'continuing-scholar' && 'REQUIREMENTS FOR ENROLLMENT OF CONTINUING STUDENTS (Scholarship)'}
+                            {selectedCategory === 'continuing-non-scholar' && 'REQUIREMENTS FOR ENROLLMENT OF CONTINUING STUDENTS (Non-Scholarship)'}
+                          </h4>
+                          <ul>
+                            {admissionsData.requirements[selectedCategory].map((req, index) => {
+                              // If requirement_text contains newlines, split and display as list items
+                              const requirementLines = req.text ? req.text.split('\n').filter(line => line.trim()) : [];
+                              if (requirementLines.length > 1) {
+                                // Multiple lines - display each as a list item with checkmark
+                                return requirementLines.map((line, lineIndex) => {
+                                  const lineText = line.trim();
+                                  // Remove existing checkmark if present to avoid duplicates
+                                  const cleanText = lineText.startsWith('✓') ? lineText.substring(1).trim() : lineText;
+                                  return (
+                                    <li key={`${req.id || index}-${lineIndex}`}>
+                                      <span className="requirement-checkmark">✓</span> {cleanText}
+                                    </li>
+                                  );
+                                });
+                              } else {
+                                // Single line - display with checkmark
+                                const reqText = req.text || '';
+                                // Remove existing checkmark if present to avoid duplicates
+                                const cleanText = reqText.startsWith('✓') ? reqText.substring(1).trim() : reqText;
+                                return (
+                                  <li key={req.id || index}>
+                                    <span className="requirement-checkmark">✓</span> {cleanText}
+                                  </li>
+                                );
+                              }
+                            })}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Show message if no requirements for selected category */}
+                      {selectedCategory && (!admissionsData.requirements[selectedCategory] || admissionsData.requirements[selectedCategory].length === 0) && (
+                        <div className="enrollment-requirements">
+                          <h4>
+                            {selectedCategory === 'new-scholar' && 'REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Scholarship)'}
+                            {selectedCategory === 'new-non-scholar' && 'REQUIREMENTS FOR ENROLLMENT OF NEW STUDENTS (Non-Scholarship)'}
+                            {selectedCategory === 'continuing-scholar' && 'REQUIREMENTS FOR ENROLLMENT OF CONTINUING STUDENTS (Scholarship)'}
+                            {selectedCategory === 'continuing-non-scholar' && 'REQUIREMENTS FOR ENROLLMENT OF CONTINUING STUDENTS (Non-Scholarship)'}
+                          </h4>
+                          <p style={{ color: '#666', fontStyle: 'italic' }}>No requirements available for this category at this time.</p>
+                        </div>
+                      )}
+                    </>
                   )}
-
-                  {/* Continuing Student (Scholar) */}
-                  {selectedCategory === 'continuing-scholar' && (
-                    <div className="enrollment-requirements">
-                      <h4>REQUIREMENTS FOR ENROLLMENT OF CONTINUING STUDENTS (Scholarship)</h4>
-                      <ul>
-                        <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
-                        <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
-                        <li>✓ PSA Birth Certificate (Photocopy)</li>
-                        <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
-                        <li>✓ One (1) Long-size Brown Expanded Envelope</li>
-                        <li>✓ Previous Semester Grades/Report Card</li>
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Continuing Student (Non-Scholar) */}
-                  {selectedCategory === 'continuing-non-scholar' && (
-                    <div className="enrollment-requirements">
-                      <h4>REQUIREMENTS FOR ENROLLMENT OF CONTINUING STUDENTS (Non-Scholarship)</h4>
-                      <ul>
-                        <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
-                        <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
-                        <li>✓ PSA Birth Certificate (Photocopy)</li>
-                        <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
-                        <li>✓ One (1) Long-size Brown Expanded Envelope</li>
-                        <li>✓ Previous Semester Grades/Report Card</li>
-                        <li>✓ Official Receipt for Tuition and Fees</li>
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Transferee Requirements (kept for reference, can be shown if needed) */}
-                  <div className="transferee-requirements" style={{ display: 'none' }}>
-                    <h4>REQUIREMENTS FOR ENROLLMENT OF TRANSFEREES</h4>
-                    <ul>
-                      <li>✓ Accident Insurance with One (1) Year Coverage (Original and Photocopy)</li>
-                      <li>✓ Transcript of Records (TOR) (Original copy)</li>
-                      <li>✓ Honorable Dismissal/Certificate of Transfer Credential (Original copy)</li>
-                      <li>✓ Certificate of GOOD MORAL CHARACTER (Original copy)</li>
-                      <li>✓ PSA Birth Certificate (Photocopy)</li>
-                      <li>✓ CLEAR COPY of 2x2 ID Picture with Name Tag & on a White Background (2pcs)</li>
-                      <li>✓ Accreditation of Subjects Form (Original copy)</li>
-                      <li>✓ One (1) Long-size Brown Expanded Envelope</li>
-                    </ul>
-                  </div>
                 </div>
 
-                <div className={`requirements-note ${isRequirementsNoteVisible ? 'fade-in-visible' : ''}`}>
-                  <div className="note-icon">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                      <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                {/* Dynamic Notes */}
+                {admissionsData.notes && admissionsData.notes.length > 0 && (
+                  <div className={`requirements-note ${isRequirementsNoteVisible ? 'fade-in-visible' : ''}`}>
+                    <div className="note-icon">
+                      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    </div>
+                    <div className="note-content">
+                      <h5>Important Notes:</h5>
+                      <ul>
+                        {admissionsData.notes.map((note, index) => (
+                          <li key={note.id || index}>{note.text}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <div className="note-content">
-                    <h5>Important Notes:</h5>
-                    <ul>
-                      <li>All documents must be original or certified true copies</li>
-                      <li>Foreign documents must be authenticated by the Philippine Embassy</li>
-                      <li>Application deadline: March 31, 2026 for Academic Year 2026-2027</li>
-                      <li>Incomplete applications will not be processed</li>
-                      <li>Entrance examination fee: ₱500.00 (non-refundable)</li>
-                    </ul>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -251,52 +277,31 @@ const Admissions = () => {
               <h2>Enrollment Process</h2>
               <p className="section-subtitle">Follow these steps to apply for your chosen program</p>
               
-              <div className={`process-timeline ${isProcessTimelineVisible ? 'fade-in-visible' : ''}`}>
-                <div className="timeline-item">
-                  <div className="timeline-number">1</div>
-                  <div className="timeline-content">
-                    <h4>Secure & Accomplish Enrollment Form</h4>
-                    <p>Respective program head offices.</p>
-                  </div>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <p>Loading enrollment process...</p>
                 </div>
-                
-                <div className="timeline-item">
-                  <div className="timeline-number">2</div>
-                  <div className="timeline-content">
-                    <h4>Subject Advising</h4>
-                    <p>Respective program head offices.</p>
-                  </div>
+              ) : error ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#dc3545' }}>
+                  <p>{error}</p>
                 </div>
-                
-                <div className="timeline-item">
-                  <div className="timeline-number">3</div>
-                  <div className="timeline-content">
-                    <h4>Payment of School Fees (Non-Scholar)</h4>
-                    <p>Proceed to Treasurer's Office (Note: Photocopy your OFFICIAL RECEIPT and submit together with the original copy for encoding.)</p>
-
-                    <h4>Verification of Scholarship (Paglambo Scholar)</h4>
-                    <p>Registrar`s Office</p>
-                  </div>
+              ) : admissionsData.processSteps && admissionsData.processSteps.length > 0 ? (
+                <div className={`process-timeline ${isProcessTimelineVisible ? 'fade-in-visible' : ''}`}>
+                  {admissionsData.processSteps.map((step, index) => (
+                    <div key={step.id || index} className="timeline-item">
+                      <div className="timeline-number">{step.step_number || index + 1}</div>
+                      <div className="timeline-content">
+                        <h4>{step.title}</h4>
+                        <p dangerouslySetInnerHTML={{ __html: step.description.replace(/\n/g, '<br />') }}></p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                
-                <div className="timeline-item">
-                  <div className="timeline-number">4</div>
-                  <div className="timeline-content">
-                    <h4>Submit Enrollment Load Form for Encoding of Subjects</h4>
-                    <p>Registrar`s Office</p>
-                  </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                  <p>No enrollment process steps available at this time.</p>
                 </div>
-                
-                <div className="timeline-item">
-                  <div className="timeline-number">5</div>
-                  <div className="timeline-content">
-                    <h4>Releasing of Enrollment Load Slip</h4>
-                    <p>Registrar`s Office <br />
-                    (Load Slip will be released during enrollment time only.)</p>
-                  </div>
-                </div>
-
-              </div>
+              )}
               
               <div className="section-cta">
                 <a href="/contact" className="btn btn-secondary">Contact Admissions Office</a>

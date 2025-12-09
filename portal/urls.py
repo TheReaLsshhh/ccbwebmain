@@ -63,4 +63,22 @@ urlpatterns = [
     path('api/admin/personnel/create/', views.api_create_personnel, name='api_create_personnel'),
     path('api/admin/personnel/<int:personnel_id>/', views.api_update_personnel, name='api_update_personnel'),
     path('api/admin/personnel/<int:personnel_id>/delete/', views.api_delete_personnel, name='api_delete_personnel'),
+    
+    # Admin-only CRUD endpoints for Admission Requirements
+    path('api/admin/admission-requirements/', views.api_admin_admission_requirements, name='api_admin_admission_requirements'),
+    path('api/admin/admission-requirements/create/', views.api_create_admission_requirement, name='api_create_admission_requirement'),
+    path('api/admin/admission-requirements/<int:requirement_id>/', views.api_update_admission_requirement, name='api_update_admission_requirement'),
+    path('api/admin/admission-requirements/<int:requirement_id>/delete/', views.api_delete_admission_requirement, name='api_delete_admission_requirement'),
+    
+    # Admin-only CRUD endpoints for Enrollment Process Steps
+    path('api/admin/enrollment-steps/', views.api_admin_enrollment_steps, name='api_admin_enrollment_steps'),
+    path('api/admin/enrollment-steps/create/', views.api_create_enrollment_step, name='api_create_enrollment_step'),
+    path('api/admin/enrollment-steps/<int:step_id>/', views.api_update_enrollment_step, name='api_update_enrollment_step'),
+    path('api/admin/enrollment-steps/<int:step_id>/delete/', views.api_delete_enrollment_step, name='api_delete_enrollment_step'),
+    
+    # Admin-only CRUD endpoints for Admission Notes
+    path('api/admin/admission-notes/', views.api_admin_admission_notes, name='api_admin_admission_notes'),
+    path('api/admin/admission-notes/create/', views.api_create_admission_note, name='api_create_admission_note'),
+    path('api/admin/admission-notes/<int:note_id>/', views.api_update_admission_note, name='api_update_admission_note'),
+    path('api/admin/admission-notes/<int:note_id>/delete/', views.api_delete_admission_note, name='api_delete_admission_note'),
 ] 

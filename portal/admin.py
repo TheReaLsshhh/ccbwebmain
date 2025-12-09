@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AcademicProgram, ProgramSpecialization, Announcement, Event, Achievement, Department, Personnel
+from .models import AcademicProgram, ProgramSpecialization, Announcement, Event, Achievement, Department, Personnel, AdmissionRequirement, EnrollmentProcessStep, AdmissionNote
 
 # Register your models here.
 admin.site.register(AcademicProgram)
@@ -92,3 +92,40 @@ class PersonnelAdmin(admin.ModelAdmin):
             'fields': ('is_active', 'display_order')
         }),
     )
+
+@admin.register(AdmissionRequirement)
+class AdmissionRequirementAdmin(admin.ModelAdmin):
+    list_display = ('category', 'requirement_text_short', 'display_order', 'is_active')
+    list_filter = ('category', 'is_active')
+    search_fields = ('requirement_text',)
+    ordering = ('category', 'display_order', 'id')
+    
+    def requirement_text_short(self, obj):
+        return obj.requirement_text[:80] + '...' if len(obj.requirement_text) > 80 else obj.requirement_text
+    requirement_text_short.short_description = 'Requirement'
+
+@admin.register(EnrollmentProcessStep)
+class EnrollmentProcessStepAdmin(admin.ModelAdmin):
+    list_display = ('step_number', 'title', 'display_order', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title', 'description')
+    ordering = ('display_order', 'step_number')
+    fieldsets = (
+        ('Step Information', {
+            'fields': ('step_number', 'title', 'description')
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'display_order')
+        }),
+    )
+
+@admin.register(AdmissionNote)
+class AdmissionNoteAdmin(admin.ModelAdmin):
+    list_display = ('title', 'note_text_short', 'display_order', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title', 'note_text')
+    ordering = ('display_order', 'title')
+    
+    def note_text_short(self, obj):
+        return obj.note_text[:80] + '...' if len(obj.note_text) > 80 else obj.note_text
+    note_text_short.short_description = 'Note'
