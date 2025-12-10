@@ -9,11 +9,16 @@ class ApiService {
 
     async makeRequest(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+        const isFormData = options.body instanceof FormData;
+        const headers = {
+            'Content-Type': isFormData ? undefined : 'application/json',
+            ...options.headers,
+        };
+        if (headers['Content-Type'] === undefined) {
+            delete headers['Content-Type']; // allow browser to set multipart boundary
+        }
         const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
+            headers,
             credentials: 'include', // Include cookies for authentication
             ...options,
         };
@@ -90,14 +95,14 @@ class ApiService {
         console.log('API: Creating announcement with payload:', payload);
         return this.makeRequest('/admin/announcements/create/', {
             method: 'POST',
-            body: JSON.stringify(payload),
+            body: payload,
         });
     }
 
     async updateAnnouncement(announcementId, payload) {
         return this.makeRequest(`/admin/announcements/${announcementId}/`, {
             method: 'PUT',
-            body: JSON.stringify(payload),
+            body: payload,
         });
     }
 
@@ -274,14 +279,14 @@ class ApiService {
     async createEvent(payload) {
         return this.makeRequest('/admin/events/create/', {
             method: 'POST',
-            body: JSON.stringify(payload),
+            body: payload,
         });
     }
 
     async updateEvent(eventId, payload) {
         return this.makeRequest(`/admin/events/${eventId}/`, {
             method: 'PUT',
-            body: JSON.stringify(payload),
+            body: payload,
         });
     }
 
@@ -295,14 +300,14 @@ class ApiService {
     async createAchievement(payload) {
         return this.makeRequest('/admin/achievements/create/', {
             method: 'POST',
-            body: JSON.stringify(payload),
+            body: payload,
         });
     }
 
     async updateAchievement(achievementId, payload) {
         return this.makeRequest(`/admin/achievements/${achievementId}/`, {
             method: 'PUT',
-            body: JSON.stringify(payload),
+            body: payload,
         });
     }
 
