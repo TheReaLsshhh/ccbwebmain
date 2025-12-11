@@ -363,24 +363,33 @@ const AdminPage = () => {
           }
           break;
         case 'events':
-          // Prepare event data with proper date/time formatting
-          const eventData = {
-            ...formData,
-            // Ensure date is in YYYY-MM-DD format
-            event_date: formData.event_date || '',
-            // Ensure time is in HH:MM format
-            start_time: formData.start_time || '',
-            end_time: formData.end_time || '',
-            // Convert boolean values
-            is_active: !!formData.is_active,
-            display_order: Number(formData.display_order) || 0
-          };
+          // Prepare FormData for file upload
+          const eventFormData = new FormData();
+          eventFormData.append('title', formData.title || '');
+          eventFormData.append('description', formData.description || '');
+          eventFormData.append('details', formData.details || '');
+          eventFormData.append('event_date', formData.event_date || '');
+          eventFormData.append('start_time', formData.start_time || '');
+          eventFormData.append('end_time', formData.end_time || '');
+          eventFormData.append('location', formData.location || '');
+          eventFormData.append('is_active', formData.is_active ? 'true' : 'false');
+          eventFormData.append('display_order', formData.display_order || 0);
+          
+          // Handle image upload
+          if (formData.image && formData.image instanceof File) {
+            eventFormData.append('image', formData.image);
+          }
+          
+          // Handle image removal
+          if (formData.remove_image) {
+            eventFormData.append('remove_image', 'true');
+          }
           
           if (isEditing) {
-            result = await apiService.updateEvent(editingItem.id, eventData);
+            result = await apiService.updateEvent(editingItem.id, eventFormData);
             setEvents(prev => prev.map(e => e.id === editingItem.id ? result.event : e));
           } else {
-            result = await apiService.createEvent(eventData);
+            result = await apiService.createEvent(eventFormData);
             setEvents(prev => [...prev, result.event]);
           }
           break;
@@ -774,7 +783,7 @@ const AdminPage = () => {
       case 'academic-programs':
         return ['Title', 'Short Title', 'Duration', 'Units', 'Status'];
       case 'events':
-        return ['Title', 'Date', 'Time', 'Location', 'Status'];
+        return ['Title', 'Date', 'Time', 'Location', 'Image', 'Status'];
       case 'achievements':
         return ['Title', 'Date', 'Category', 'Status'];
       case 'announcements':
@@ -813,6 +822,7 @@ const AdminPage = () => {
           item.event_date || 'N/A',
           `${item.start_time || 'N/A'} - ${item.end_time || 'N/A'}`,
           item.location || 'TBA',
+          item.image ? 'Yes' : 'No',
           item.is_active ? 'Active' : 'Inactive'
         ];
       case 'achievements':
@@ -1148,6 +1158,47 @@ const AdminPage = () => {
                 value={formData.location || ''}
                 onChange={handleInputChange}
               />
+            </div>
+            <div className="form-group">
+              <label>Image</label>
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleInputChange}
+              />
+              {formData.image && formData.image instanceof File && (
+                <div style={{ marginTop: '10px' }}>
+                  <p style={{ color: '#666', fontSize: '0.9rem' }}>Selected: {formData.image.name}</p>
+                  <img 
+                    src={URL.createObjectURL(formData.image)} 
+                    alt="Preview" 
+                    style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px', borderRadius: '8px' }}
+                  />
+                </div>
+              )}
+              {editingItem && editingItem.image && !formData.image && (
+                <div style={{ marginTop: '10px' }}>
+                  <p style={{ color: '#666', fontSize: '0.9rem' }}>Current image:</p>
+                  <img 
+                    src={editingItem.image} 
+                    alt="Current" 
+                    style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px', borderRadius: '8px' }}
+                  />
+                  <label className="checkbox-label" style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      name="remove_image"
+                      checked={formData.remove_image || false}
+                      onChange={handleInputChange}
+                    />
+                    Remove current image
+                  </label>
+                </div>
+              )}
+              <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                Upload an image for this event. Recommended size: 800x600px or larger.
+              </small>
             </div>
             <div className="form-row-inline">
               <div className="form-group">

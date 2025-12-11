@@ -271,18 +271,70 @@ class ApiService {
     }
 
     // Admin: Events CRUD
-    async createEvent(payload) {
-        return this.makeRequest('/admin/events/create/', {
+    async createEvent(formData) {
+        // Use FormData for file uploads (supports image uploads)
+        const url = `${this.baseURL}/admin/events/create/`;
+        const config = {
             method: 'POST',
-            body: JSON.stringify(payload),
-        });
+            body: formData,
+            credentials: 'include',
+            // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
+        };
+
+        try {
+            const response = await fetch(url, config);
+            let data = null;
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                try { data = await response.json(); } catch (_) { /* ignore */ }
+            }
+
+            if (!response.ok) {
+                const message = (data && (data.message || data.detail || data.error)) || `HTTP error! status: ${response.status}`;
+                const err = new Error(message);
+                err.status = response.status;
+                err.data = data;
+                throw err;
+            }
+
+            return data || await response.json();
+        } catch (error) {
+            console.error('API request failed:', error);
+            throw error;
+        }
     }
 
-    async updateEvent(eventId, payload) {
-        return this.makeRequest(`/admin/events/${eventId}/`, {
+    async updateEvent(eventId, formData) {
+        // Use FormData for file uploads (supports image uploads)
+        const url = `${this.baseURL}/admin/events/${eventId}/`;
+        const config = {
             method: 'PUT',
-            body: JSON.stringify(payload),
-        });
+            body: formData,
+            credentials: 'include',
+            // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
+        };
+
+        try {
+            const response = await fetch(url, config);
+            let data = null;
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                try { data = await response.json(); } catch (_) { /* ignore */ }
+            }
+
+            if (!response.ok) {
+                const message = (data && (data.message || data.detail || data.error)) || `HTTP error! status: ${response.status}`;
+                const err = new Error(message);
+                err.status = response.status;
+                err.data = data;
+                throw err;
+            }
+
+            return data || await response.json();
+        } catch (error) {
+            console.error('API request failed:', error);
+            throw error;
+        }
     }
 
     async deleteEvent(eventId) {

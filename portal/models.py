@@ -108,6 +108,7 @@ class Event(models.Model):
     start_time = models.TimeField(help_text="Start time of the event")
     end_time = models.TimeField(help_text="End time of the event")
     location = models.CharField(max_length=200, blank=True, help_text="Event location")
+    image = models.ImageField(upload_to='events/', blank=True, null=True, help_text="Event image")
     is_active = models.BooleanField(default=True)
     display_order = models.PositiveIntegerField(default=0, help_text="Order for display on website")
     created_at = models.DateTimeField(auto_now_add=True)

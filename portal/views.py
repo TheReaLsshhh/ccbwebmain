@@ -93,6 +93,33 @@ def _parse_date(value: object) -> datetime.date:
     raise ValueError("Invalid date format. Expected YYYY-MM-DD or MM/DD/YYYY.")
 
 
+# Utility: parse time strings into datetime.time objects
+def _parse_time(value: object) -> datetime.time:
+    """Parse a time value into a datetime.time.
+    
+    Accepts:
+    - datetime.time (returns as-is)
+    - datetime.datetime (returns time component)
+    - Time string in formats: "HH:MM" or "HH:MM:SS"
+    """
+    if isinstance(value, datetime.time):
+        return value
+    if isinstance(value, datetime.datetime):
+        return value.time()
+    if isinstance(value, str):
+        # Try HH:MM:SS format first
+        try:
+            return datetime.datetime.strptime(value, '%H:%M:%S').time()
+        except ValueError:
+            pass
+        # Try HH:MM format
+        try:
+            return datetime.datetime.strptime(value, '%H:%M').time()
+        except ValueError:
+            pass
+    raise ValueError("Invalid time format. Expected HH:MM or HH:MM:SS.")
+
+
 def _public_image_url(rel_path: str) -> str:
     base = os.getenv('PUBLIC_IMAGE_BASE_URL') or os.getenv('PUBLIC_BASE_URL', _compute_lan_base_url())
     if not rel_path.startswith('/'):
@@ -492,8 +519,9 @@ def api_events(request):
     """Return active events"""
     try:
         items = Event.objects.filter(is_active=True).order_by('display_order', 'event_date', 'start_time')
-        data = [
-            {
+        data = []
+        for e in items:
+            event_data = {
                 'id': e.id,
                 'title': e.title,
                 'description': e.description,
@@ -506,8 +534,11 @@ def api_events(request):
                 'location': e.location,
                 'display_order': e.display_order,
             }
-            for e in items
-        ]
+            if e.image:
+                event_data['image'] = request.build_absolute_uri(e.image.url)
+            else:
+                event_data['image'] = None
+            data.append(event_data)
         return JsonResponse({'status': 'success', 'events': data, 'count': len(data)})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': f'Error fetching events: {str(e)}'}, status=500)
@@ -1450,6 +1481,10 @@ def api_admin_events(request):
                 'created_at': event.created_at.isoformat(),
                 'updated_at': event.updated_at.isoformat()
             }
+            if event.image:
+                event_data['image'] = request.build_absolute_uri(event.image.url)
+            else:
+                event_data['image'] = None
             events_data.append(event_data)
         
         return JsonResponse({
@@ -1674,12 +1709,36 @@ def api_delete_academic_program(request, program_id):
 def api_create_event(request):
     """Create a new event (Admin only)"""
     try:
-        data = json.loads(request.body)
+        # Handle multipart/form-data for file upload
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            details = request.POST.get('details', '')
+            event_date = request.POST.get('event_date')
+            start_time = request.POST.get('start_time')
+            end_time = request.POST.get('end_time')
+            location = request.POST.get('location', '')
+            is_active = request.POST.get('is_active', 'true').lower() == 'true'
+            display_order = int(request.POST.get('display_order', 0))
+            image = request.FILES.get('image')
+        else:
+            # Handle JSON (for backward compatibility, though image won't work)
+            data = json.loads(request.body)
+            title = data.get('title')
+            description = data.get('description')
+            details = data.get('details', '')
+            event_date = data.get('event_date')
+            start_time = data.get('start_time')
+            end_time = data.get('end_time')
+            location = data.get('location', '')
+            is_active = data.get('is_active', True)
+            display_order = data.get('display_order', 0)
+            image = None
         
         # Validate required fields
-        required_fields = ['title', 'description', 'event_date', 'start_time', 'end_time']
-        for field in required_fields:
-            if not data.get(field):
+        required_fields = {'title': title, 'description': description, 'event_date': event_date, 'start_time': start_time, 'end_time': end_time}
+        for field, value in required_fields.items():
+            if not value:
                 return JsonResponse({
                     'status': 'error',
                     'message': f'Field "{field}" is required'
@@ -1687,25 +1746,45 @@ def api_create_event(request):
         
         # Create the event
         event = Event.objects.create(
-            title=data['title'],
-            description=data['description'],
-            details=data.get('details', ''),
-            event_date=_parse_date(data['event_date']),
-            start_time=data['start_time'],
-            end_time=data['end_time'],
-            location=data.get('location', ''),
-            is_active=data.get('is_active', True),
-            display_order=data.get('display_order', 0)
+            title=title,
+            description=description,
+            details=details,
+            event_date=_parse_date(event_date),
+            start_time=_parse_time(start_time),
+            end_time=_parse_time(end_time),
+            location=location,
+            is_active=is_active,
+            display_order=display_order
         )
+        
+        # Handle image upload if provided
+        if image:
+            event.image = image
+            event.save()
+        
+        event_data = {
+            'id': event.id,
+            'title': event.title,
+            'description': event.description,
+            'details': event.details,
+            'event_date': event.event_date.isoformat(),
+            'start_time': event.start_time.strftime('%H:%M'),
+            'end_time': event.end_time.strftime('%H:%M'),
+            'location': event.location,
+            'is_active': event.is_active,
+            'display_order': event.display_order,
+            'created_at': event.created_at.isoformat(),
+            'updated_at': event.updated_at.isoformat()
+        }
+        if event.image:
+            event_data['image'] = request.build_absolute_uri(event.image.url)
+        else:
+            event_data['image'] = None
         
         return JsonResponse({
             'status': 'success',
             'message': 'Event created successfully',
-            'event': {
-                'id': event.id,
-                'title': event.title,
-                'event_date': event.event_date.isoformat()
-            }
+            'event': event_data
         }, status=201)
     
     except json.JSONDecodeError:
@@ -1728,31 +1807,82 @@ def api_update_event(request, event_id):
     """Update an event (Admin only)"""
     try:
         event = get_object_or_404(Event, id=event_id)
-        data = json.loads(request.body)
         
-        # Update fields
-        fields_to_update = [
-            'title', 'description', 'details', 'event_date', 'start_time', 
-            'end_time', 'location', 'is_active', 'display_order'
-        ]
-        
-        for field in fields_to_update:
-            if field in data:
-                if field == 'event_date':
-                    setattr(event, field, _parse_date(data[field]))
-                else:
-                    setattr(event, field, data[field])
+        # Handle multipart/form-data for file upload
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            if 'title' in request.POST:
+                event.title = request.POST.get('title')
+            if 'description' in request.POST:
+                event.description = request.POST.get('description')
+            if 'details' in request.POST:
+                event.details = request.POST.get('details', '')
+            if 'event_date' in request.POST:
+                event.event_date = _parse_date(request.POST.get('event_date'))
+            if 'start_time' in request.POST:
+                event.start_time = _parse_time(request.POST.get('start_time'))
+            if 'end_time' in request.POST:
+                event.end_time = _parse_time(request.POST.get('end_time'))
+            if 'location' in request.POST:
+                event.location = request.POST.get('location', '')
+            if 'is_active' in request.POST:
+                event.is_active = request.POST.get('is_active', 'true').lower() == 'true'
+            if 'display_order' in request.POST:
+                event.display_order = int(request.POST.get('display_order', 0))
+            
+            # Handle image upload
+            image = request.FILES.get('image')
+            remove_image = request.POST.get('remove_image', 'false').lower() == 'true'
+            
+            if remove_image:
+                if event.image:
+                    event.image.delete(save=False)
+                event.image = None
+            elif image:
+                event.image = image
+        else:
+            # Handle JSON
+            data = json.loads(request.body)
+            
+            # Update fields
+            fields_to_update = [
+                'title', 'description', 'details', 'event_date', 'start_time', 
+                'end_time', 'location', 'is_active', 'display_order'
+            ]
+            
+            for field in fields_to_update:
+                if field in data:
+                    if field == 'event_date':
+                        setattr(event, field, _parse_date(data[field]))
+                    elif field in ['start_time', 'end_time']:
+                        setattr(event, field, _parse_time(data[field]))
+                    else:
+                        setattr(event, field, data[field])
         
         event.save()
+        
+        event_data = {
+            'id': event.id,
+            'title': event.title,
+            'description': event.description,
+            'details': event.details,
+            'event_date': event.event_date.isoformat(),
+            'start_time': event.start_time.strftime('%H:%M'),
+            'end_time': event.end_time.strftime('%H:%M'),
+            'location': event.location,
+            'is_active': event.is_active,
+            'display_order': event.display_order,
+            'created_at': event.created_at.isoformat(),
+            'updated_at': event.updated_at.isoformat()
+        }
+        if event.image:
+            event_data['image'] = request.build_absolute_uri(event.image.url)
+        else:
+            event_data['image'] = None
         
         return JsonResponse({
             'status': 'success',
             'message': 'Event updated successfully',
-            'event': {
-                'id': event.id,
-                'title': event.title,
-                'event_date': event.event_date.isoformat()
-            }
+            'event': event_data
         })
     
     except json.JSONDecodeError:

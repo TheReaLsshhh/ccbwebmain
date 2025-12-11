@@ -729,12 +729,24 @@ const NewsEvents = () => {
                       <div className={`events-grid ${isEventsVisible ? 'fade-in-visible' : ''}`}>
                         {events.slice(0, eventsDisplayCount).map(event => (
                           <div key={event.id} className="event-item">
-                            <div className="event-image">
-                              <div className="event-date">
-                                <span className="day">{formatEventDate(event.event_date).day}</span>
-                                <span className="month">{formatEventDate(event.event_date).month}</span>
+                            {event.image ? (
+                              <div className="event-image-wrapper">
+                                <img src={event.image} alt={event.title} />
+                                <div className="event-date-overlay">
+                                  <div className="event-date">
+                                    <span className="day">{formatEventDate(event.event_date).day}</span>
+                                    <span className="month">{formatEventDate(event.event_date).month}</span>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
+                            ) : (
+                              <div className="event-image">
+                                <div className="event-date">
+                                  <span className="day">{formatEventDate(event.event_date).day}</span>
+                                  <span className="month">{formatEventDate(event.event_date).month}</span>
+                                </div>
+                              </div>
+                            )}
                             <div className="event-content">
                               <h4>{event.title}</h4>
                               <p className="event-time">{event.formatted_time || `${event.start_time || ''} - ${event.end_time || ''}`}</p>
@@ -922,7 +934,10 @@ const NewsEvents = () => {
             )}
             <h3 className="modal-title">{selectedEvent.title}</h3>
             <p className="modal-date">{formatDate(selectedEvent.event_date)}</p>
-            <p className="modal-time">{selectedEvent.formatted_time}</p>
+            {selectedEvent.formatted_time && <p className="modal-time">{selectedEvent.formatted_time}</p>}
+            {!selectedEvent.formatted_time && selectedEvent.start_time && selectedEvent.end_time && (
+              <p className="modal-time">{selectedEvent.start_time} - {selectedEvent.end_time}</p>
+            )}
             {selectedEvent.location && <p className="modal-location">📍 {selectedEvent.location}</p>}
             <div className="modal-body">
               {renderDetails(
