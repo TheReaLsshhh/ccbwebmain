@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
@@ -97,4 +97,8 @@ urlpatterns = [
     # Admin-only endpoints for Institutional Info
     path('api/admin/institutional-info/', views.api_admin_institutional_info, name='api_admin_institutional_info'),
     path('api/admin/institutional-info/update/', views.api_update_institutional_info, name='api_update_institutional_info'),
+    
+    # Handle webpack hot-update requests to suppress 404 errors
+    # These files are served by webpack-dev-server (port 3000), not Django
+    re_path(r'^.*\.hot-update\.(js|json)$', views.handle_hot_update, name='handle_hot_update'),
 ] 

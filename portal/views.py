@@ -3608,3 +3608,11 @@ def _send_brevo_template(to_email: str, template_id: str, merge_data: dict) -> b
         return True
     except Exception:
         return False
+
+
+def handle_hot_update(request):
+    """Handle webpack hot-update requests to suppress 404 errors in logs.
+    These files are served by webpack-dev-server on port 3000, not Django.
+    """
+    from django.http import HttpResponse
+    return HttpResponse(status=204)  # No Content - silently ignore

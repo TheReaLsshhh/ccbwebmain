@@ -1097,7 +1097,7 @@ const NewsEvents = () => {
                 <div className="date-detail-section">
                   <h4 className="date-detail-section-title">
                     <span className="date-detail-icon event-icon">📅</span>
-                    Events ({selectedDateItems.events.length})
+                    <span className="date-detail-text-1">Events ({selectedDateItems.events.length})</span>
                   </h4>
                   <div className="date-detail-items">
                     {selectedDateItems.events.map((evt) => (
@@ -1121,7 +1121,7 @@ const NewsEvents = () => {
                 <div className="date-detail-section">
                   <h4 className="date-detail-section-title">
                     <span className="date-detail-icon news-icon">📰</span>
-                    News ({selectedDateItems.news.length})
+                    <span className="date-detail-text-2">News ({selectedDateItems.news.length})</span>
                   </h4>
                   <div className="date-detail-items">
                     {selectedDateItems.news.map((newsItem) => (
@@ -1145,7 +1145,7 @@ const NewsEvents = () => {
                 <div className="date-detail-section">
                   <h4 className="date-detail-section-title">
                     <span className="date-detail-icon announcement-icon">📢</span>
-                    Announcements ({selectedDateItems.announcements.length})
+                    <span className="date-detail-text-3">Announcements ({selectedDateItems.announcements.length})</span>
                   </h4>
                   <div className="date-detail-items">
                     {selectedDateItems.announcements.map((ann) => (
@@ -1169,7 +1169,7 @@ const NewsEvents = () => {
                 <div className="date-detail-section">
                   <h4 className="date-detail-section-title">
                     <span className="date-detail-icon achievement-icon">🏆</span>
-                    Achievements ({selectedDateItems.achievements.length})
+                    <span className="date-detail-text">Achievements ({selectedDateItems.achievements.length})</span>
                   </h4>
                   <div className="date-detail-items">
                     {selectedDateItems.achievements.map((achievement) => (
