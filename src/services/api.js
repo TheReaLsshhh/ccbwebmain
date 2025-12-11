@@ -275,19 +275,17 @@ class ApiService {
     // Admin: Events CRUD
     async createEvent(formData) {
         // Use FormData for file uploads (supports image uploads)
-        const url = `${this.baseURL}/admin/events/create/`;
-        const config = {
+        return this.makeRequest('/admin/events/create/', {
             method: 'POST',
-            body: JSON.stringify(payload),
+            body: formData instanceof FormData ? formData : JSON.stringify(formData),
         });
     }
 
     async updateEvent(eventId, formData) {
         // Use FormData for file uploads (supports image uploads)
-        const url = `${this.baseURL}/admin/events/${eventId}/`;
-        const config = {
+        return this.makeRequest(`/admin/events/${eventId}/`, {
             method: 'PUT',
-            body: JSON.stringify(payload),
+            body: formData instanceof FormData ? formData : JSON.stringify(formData),
         });
     }
 

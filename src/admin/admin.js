@@ -384,7 +384,6 @@ const AdminPage = () => {
             setEvents(prev => [...prev, result.event]);
           }
           break;
-        }
         case 'achievements': {
           const hasFile = (formData.image && formData.image instanceof File) || formData.remove_image;
           let payload;
